@@ -2,36 +2,17 @@ import asyncio
 import aiofiles
 import json
 import pandas as pd
+from CONFIG import *
 from async_O365 import send_email
-from ops1 import load_df_with_chunk, load_df_from_db, run_pm_message
-
-
-"VARS TO EDIT - csv files paths"
-CONTROL_FULL_TRANSACTION = r"C:\Users\BANASIM\Desktop\jupyter_repo\BIAF\Control Full Transactions.csv"
-COST_RATE_CHANGES_DATA = r"C:\Users\BANASIM\Desktop\jupyter_repo\BIAF\Feb Cost Rate Changes - data.xlsx"
-CONFIG = r"C:\Users\BANASIM\PycharmProjects\BIAF\creds.json"
-
-
-"VARS SETTING UP PROGRAMMATICALLY"
-CLIENT_ID = None
-CLIENT_SECRET = None
-MAIL_BOX = None
-MAIL_BOX_PASSW = None
-
-dsn = f'Driver=SQL Server;Server=GBLON0-SQL043;DATABASE=Biaf_copy;'                              # UID={username};PWD={password}
-CONN_STRING = "mssql+pyodbc://GBLON0-SQL043/Biaf_copy?driver=SQL+Server"    # "mssql+pyodbc://GBLON0-SQL043/Biaf_copy?driver=SQL+Server"
-
-
-def set_params(data:json):
-    if data:
-        data = json.loads(data)
-        CLIENT_ID = data.get("client")
-        CLIENT_SECRET = data.get("secretID")
-        CONN_STRING = data.get("conn_string")
-        return
+from ops1 import load_df_with_chunk, load_df_from_db, run_pm_message, sending_emails
 
 
 async def run_dataframes():
+    """
+    async task gathering for dataframes.
+    Method uses Future classe
+    :return: pandas dataframe : dfs[0], dfs[1]...
+    """
     loop = asyncio.get_event_loop()
 
     # async with aiofiles.open(CONFIG, mode='r') as f:
@@ -46,17 +27,27 @@ async def run_dataframes():
 
 
 async def db():
-    return await load_df_from_db(dsn)
+    """
+    ms sql async loader --> test only
+    :return:
+    """
+    return await load_df_from_db(dns)
+
+
+"   **************************************** RUN SCRIPT *********************************************************  "
+
 
 if __name__ == "__main__":
+    """
+        main: 
+            - creating dataframes from files
+            - dataframes operations to get projects lists:
+                -> async querying ms sql for Project Managers email address. Then: sending emails
+                -> adding PMs to txt file - TEST STAGE ONLY
+                -> creating xls file  - TEST STAGE ONLY
+    """
     try:
         """  LOGIC:  """
-        # SET PARAMS
-        # loop = asyncio.get_event_loop()
-        # async with aiofiles.open(CONFIG, mode='r') as f:
-        #     content = await f.read()
-        #     loop.run_in_executor(None, set_params, content)
-        # dfdb = asyncio.run(db())
 
         # CREATE DFs
         df1, df2 = asyncio.run(run_dataframes())
@@ -77,14 +68,26 @@ if __name__ == "__main__":
         # GET LIST OF PROJECTS NUMBERS
         projects_num_list = merged['Project Number'].unique()
 
+        df_to_excel = merged[['Project Number', 'Project Description', 'Employee/Supplier Number', 'Employee/Supplier Name']].copy()
+
         # print(projects_num_list[:10])
     except Exception as e:
         #todo: logger
         print(e)
     else:
-        # ASYNC QUERY FOR PROJECT MANAGER EMAIL AND SENDING EMAILS
+        # ASYNC QUERY FOR PROJECT MANAGER
         if any(projects_num_list):
-            asyncio.run(run_pm_message(projects_num_list))
+            col = asyncio.run(run_pm_message(projects_num_list, df_to_excel))
+            df_to_excel['Project Manager'] = df_to_excel['Project Number'].map(col[1])
+            df_to_excel = df_to_excel[['Project Number', 'Project Description', 'Employee/Supplier Name', 'Project Manager']].copy()
+
+            with pd.ExcelWriter('output.xlsx') as excel_writer:
+                df_to_excel.to_excel(excel_writer, sheet_name='data', index=False)
+
+        # ASYNC ENDING EMAILS
+        asyncio.run(sending_emails(df_to_excel))
+
+
 
 
 

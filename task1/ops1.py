@@ -16,22 +16,12 @@ from async_O365 import send_email
 
 
 " logging init"
-logging.basicConfig(filename='BIAF_PM_COST_RATE_notifier.log', filemode='wt', level=logging.WARNING, encoding='UTF8')
+
 # logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%M')
 # handler = logging.handlers.QueueHandler(logging.handlers.Queue())
 # logger = logging.getLogger('BIAF_PM_COST_RATE_notifier_ops1')
 # logger.setLevel(logging.INFO)
 # logger.addHandler(handler)
-
-
-
-""" async logging module settings """
-# async def setup_logger():
-#     formatter = Logger()
-#     handler = AsyncStreamHandler(formatter=formatter)
-#     logger = aiologger.Logger.with_default_handlers()
-#     await do_nothing()
-#     return logger
 
 
 cols = {}
@@ -108,16 +98,12 @@ async def run_logic(project_number, data_frame:pd.DataFrame):
                         #async with aiofiles.open('PMs.txt', mode='a') as f:
                             #await f.write(f"{project_number}, {val[0]} " + '\n')
                             # await f.write(f"{val[0]}" + '\n')
-
-
-
     except Exception as e:
         #todo: emial to the admin
         print(e)
     else:
         # EMAIL DATA PROCESSING
         # asyncio.run(send_email(CLIENT_ID, CLIENT_SECRET, 'FROM@jacobs.com', 'passw', val[0]))
-
         # loop = asyncio.get_event_loop()
         # loop.run_in_executor(None, send_email, val[0])
         ...

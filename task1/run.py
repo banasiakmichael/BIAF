@@ -1,11 +1,15 @@
 import asyncio
 import aiofiles
 import json
+import logging
 import pandas as pd
 from CONFIG import *
 from async_O365 import send_email
 from ops1 import load_df_with_chunk, load_df_from_db, run_pm_message, sending_emails
 
+
+logging.basicConfig(filename='BIAF_PM_COST_RATE_logger.log', filemode='wt', level=logging.WARNING, encoding='UTF8')
+# logger.setLevel(logging.INFO)
 
 async def run_dataframes():
     """
@@ -52,6 +56,9 @@ if __name__ == "__main__":
         # CREATE DFs
         df1, df2 = asyncio.run(run_dataframes())
 
+        # create df from ProjectDictionary tab
+        #...
+
         # SET TYPE AS STRING
         df2['Employee Number'] = df2['Employee Number'].astype("string")
 
@@ -72,7 +79,6 @@ if __name__ == "__main__":
 
         # print(projects_num_list[:10])
     except Exception as e:
-        #todo: logger
         print(e)
     else:
         # ASYNC QUERY FOR PROJECT MANAGER
@@ -81,11 +87,11 @@ if __name__ == "__main__":
             df_to_excel['Project Manager'] = df_to_excel['Project Number'].map(col[1])
             df_to_excel = df_to_excel[['Project Number', 'Project Description', 'Employee/Supplier Name', 'Project Manager']].copy()
 
-            with pd.ExcelWriter('output.xlsx') as excel_writer:
-                df_to_excel.to_excel(excel_writer, sheet_name='data', index=False)
+            # with pd.ExcelWriter('output.xlsx') as excel_writer:
+            #     df_to_excel.to_excel(excel_writer, sheet_name='data', index=False)
 
-        # ASYNC ENDING EMAILS
-        asyncio.run(sending_emails(df_to_excel))
+            # ASYNC ENDING EMAILS
+            asyncio.run(sending_emails(df_to_excel))
 
 
 

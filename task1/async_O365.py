@@ -57,21 +57,18 @@ async def send_email(*args):
     async with aiofiles.open('pm.html', mode='a') as f:
       await f.write(f"{message_}" + '\n')
 
-    # credentials = (args[0], args[1])
-    # account = Account(credentials)
-    #
-    # if account.authenticate(scopes=['basic', 'message_all']):
-    #   print('Authenticated!')
-    # mailbox = account.mailbox()
-    # message = account.mailbox()
-    # message.subject = ""Project Cost Rate Changes
+    credentials = (args[0], args[1])
+    account = Account(credentials)
 
-    # message.body = message_
-
-    # message.to.add(args[4])
-    # await message.send()
-
-    await asyncio.sleep(0.01)
+    if account.authenticate(scopes=['basic', 'message_all']):
+      print('Authenticated!')
+    mailbox = account.mailbox()
+    message = account.mailbox()
+    message.subject = "Project Cost Rate Changes"
+    message.body = message_
+    message.to.add('michal.banasiak@jacobs.com')
+    await message.send()
+    # await asyncio.sleep(0.01)
 
 
 
